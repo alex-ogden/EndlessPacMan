@@ -131,36 +131,24 @@ int main()
     std::filesystem::path currentPath = std::filesystem::current_path();
     std::string directoryPath = currentPath.string();
     std::string levelDir = std::format("{}\\levels", directoryPath);
-
-    // Build file name
     std::string levelFile = std::format("{}\\level{}.txt", levelDir, std::to_string(currentLevel));
-
-    // Create our map
-    std::wstring map;
-    // Initialise map
-    map = initMap(levelFile);
-
-    // Find the number of levels
-    int numLevels = getNumLevels(levelDir);
     
-    // Player vars
-    int playerScore = 0;
+    /* Map creation and initialisation */
+    std::wstring map;
+    map = initMap(levelFile);
+    int numLevels = getNumLevels(levelDir);
 
-    // Player is placed based on where 'P' lands on the map
+    int playerScore = 0;
     int playerX;
     int playerY;
     int playerCurrentIndex;
     int playerPreviousIndex;
-
-    getPlayerPos(map, playerX, playerY, playerCurrentIndex, playerPreviousIndex);
-
-    // Index of the next-level door
     int nextLevelDoorIndex;
-
-    // Vector of enemy indexes
     std::vector<int> enemyIndexes;
 
-    // Var to track current number of coins and enemies on the map
+    // Set our player's position by finding the 'P' on the map
+    getPlayerPos(map, playerX, playerY, playerCurrentIndex, playerPreviousIndex);
+
     int numEnemies = 1;
     int numCoins = 10;
     int currentCoins = numCoins;
@@ -195,9 +183,6 @@ int main()
         break;
     }
 
-    // Seed RNG
-    srand(time(0));
-
     generateCoins(numCoins, map);
     if (numEnemies > 0)
         generateEnemies(numEnemies, map);
@@ -218,7 +203,7 @@ int main()
         // Draw the map to the screen buffer
         drawMap(map, screen, hConsole, playerScore, currentCoins, currentLevel, numLevels);
 
-        // Handle movement
+        // Handle player movement
         playerPreviousIndex = playerCurrentIndex;
         handlePlayerMovement(playerX, playerY, map);
         playerCurrentIndex = coordConvert2T1(playerX, playerY);
@@ -244,14 +229,15 @@ int main()
         }
 
         /*
-            If we run out of coins on the map, randomly
-            generate some more
+            If we run out of coins on the map, we are ready
+            to move onto the next level
         */
         if (currentCoins == 0)
         {
             // Clear the door to the next level
             clearDoor(map, nextLevelDoorIndex);
 
+            // Only load the new level once the player exits the current level
             if (playerCrossingDoor(playerCurrentIndex, nextLevelDoorIndex))
             {
                 // Increment the level
@@ -285,10 +271,10 @@ int main()
         map[playerPreviousIndex] = floorChar;
         map[playerCurrentIndex] = playerChar;
 
-        // Sleep
         Sleep(50);
     }
 
+    // End screen
     displayScore(currentLevel, numLevels, playerScore);
 
     return 0;
@@ -402,6 +388,12 @@ std::vector<Point> getNeighbours(Point p, std::wstring& map)
 
 std::vector<Point> aStar(Point start, Point goal, std::wstring& map)
 {
+    /*
+        Using the A* algorithm, the enemy works out the fastest route to the player's
+        current position. This is updated every iteration of the game loop so is probably
+        slowing the game down quite a lot
+    */
+
     std::set<Point> openSet = { start };
     std::map<Point, Point> cameFrom;
     std::map<Point, int> gScore;
