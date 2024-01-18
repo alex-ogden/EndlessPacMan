@@ -248,7 +248,7 @@ int main()
                 }
                 else
                 {
-                    currentLevel += 1;
+                    currentLevel++;
                     // Read new map from level file
                     levelFile = std::format("{}\\level{}.txt", levelDir, std::to_string(currentLevel));
                     map = initMap(levelFile);
